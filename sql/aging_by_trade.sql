@@ -13,6 +13,7 @@ WITH
         SELECT wr_id,
             prob_type AS problem_type,
             date_requested,
+
             CASE
         WHEN prob_type LIKE 'ELEC%'
                 OR prob_type = 'OUTLETS' THEN
@@ -25,14 +26,17 @@ WITH
         'Carpentry'
         WHEN prob_type LIKE 'HVAC%'
                 OR prob_type IN ('CHILLERS', 'COOLING TOWERS') THEN
-        'HVAC'
+        'HVAC Corrective'
         ELSE 'None'
         END AS trade
         FROM valid_wrs
+        -- trying to keep HVAC PM separate from the rest of HVAC here
+        WHERE prob_type != 'HVAC|PM'
     )
 SELECT trade,
     count(*) AS aging_backlog
 FROM trades
 WHERE trade != 'None'
-    AND date_requested >= dateadd(day, - 30, getdate())
-GROUP BY  trade
+    AND date_requested < dateadd(day, - 30, getdate()) AND status IN ('AA', 'A', 'I')
+GROUP By trade
+--SELECT WR's that are open and older than 30 days 
