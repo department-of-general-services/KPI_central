@@ -6,6 +6,7 @@ WITH
         FROM afm.wrhwr
         WHERE prob_type IS NOT NULL
             AND prob_type != 'TEST(DO NOT USE)'
+        --AND date_requested >= '01-01-2017'
     ),
     trades
     AS
