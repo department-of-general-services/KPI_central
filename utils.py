@@ -58,22 +58,27 @@ def add_fiscal_year(df):
     return df
 
 
-def entirely_in_fiscal_year(df):
+def entirely_within_fiscal_year(df):
     df = df.copy()
+    # store year and month for both request and closure
     df["requested_cal_year"] = df["requested_dt"].dt.year
     df["requested_cal_month"] = df["requested_dt"].dt.month
     df["closed_cal_year"] = df["date_closed"].dt.year
     df["closed_cal_month"] = df["date_closed"].dt.month
+    # store the years as numbers
     y_requested = pd.to_numeric(df["requested_cal_year"])
     y_closed = pd.to_numeric(df["closed_cal_year"])
+    # compute the fiscal year of request & closure
     df["requested_fiscal_year"] = np.where(
         df["requested_cal_month"] >= 7, y_requested + 1, y_requested
     )
     df["closed_fiscal_year"] = np.where(
         df["closed_cal_month"] >= 7, y_closed + 1, y_closed
     )
+    # drop the rows that straddle two fiscal years
     cond_both = df["requested_fiscal_year"] == df["closed_fiscal_year"]
     df = df[cond_both]
+    # cast the type of the year
     df["fiscal_year"] = (
         pd.to_datetime(df["requested_fiscal_year"], format="%Y")
     ).dt.year
