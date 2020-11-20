@@ -118,10 +118,6 @@ def compute_days_to_completion(df):
         lambda x: (x["completed_dt"] - x["requested_dt"]) / np.timedelta64(1, "D"),
         axis=1,
     ).round(2)
-        df["days_to_completion"] = df.apply(
-        lambda x: (x["completed_dt"] - x["requested_dt"]) / np.timedelta64(1, "D"),
-        axis=1,
-    ).round(2)
     # set the index
     df = df.set_index(keys="requested_dt", verify_integrity=False, drop=False)
     return df
@@ -132,7 +128,7 @@ def tidy_up_wr(df):
     df = df.loc[:, ~df.columns.duplicated()]
     df = df.dropna(subset=["wr_id", "problem_type"])
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    df["wr_id"] = df["wr_id"].astype(int).astype(str)
+    # df["wr_id"] = df["wr_id"].astype(int).astype(str)
     cond_valid = ~df["problem_type"].str.contains("TEST")
     df = df[cond_valid]
     df["status"] = df["status"].replace("A", "AA", regex=False)
