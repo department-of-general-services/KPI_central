@@ -111,6 +111,30 @@ def set_pd_params():
     return
 
 
+def get_kpi_data(config, query_path):
+    # Get private credentials using dotenv system
+    server = config["SERVER"]
+    user = config["USER"]
+    password = config["PASSWORD"]
+    db = config["DB"]
+    # Connect to Archibus database
+    conn = pyodbc.connect(
+        f"DRIVER=ODBC Driver 17 for SQL Server;SERVER={server};DATABASE={db};UID={user};PWD={password}"
+    )
+    cursor = conn.cursor()
+    # Open a file with our basic SQL query
+    fd = open(query_path, "r")
+    sqlFile = fd.read()
+    fd.close()
+
+    # Query the database
+    df = pd.read_sql(
+        sqlFile, conn, parse_dates=["date_requested", "date_completed", "date_closed"]
+    )
+    conn.close()
+    return df
+
+
 def compute_days_to_completion(df):
     df = df.copy()
     # compute days to completion
@@ -128,7 +152,7 @@ def tidy_up_wr(df):
     df = df.loc[:, ~df.columns.duplicated()]
     df = df.dropna(subset=["wr_id", "problem_type"])
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    # df["wr_id"] = df["wr_id"].astype(int).astype(str)
+    df["wr_id"] = df["wr_id"].astype(int)  # .astype(str)
     cond_valid = ~df["problem_type"].str.contains("TEST")
     df = df[cond_valid]
     df["status"] = df["status"].replace("A", "AA", regex=False)
