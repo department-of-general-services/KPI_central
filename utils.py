@@ -48,35 +48,25 @@ def glue_date_time(df, date_col, time_col, dt_col_name):
     return df
 
 
-def add_fiscal_year(df):
-    df = df.copy()
-    df["calendar_year"] = df["requested_dt"].dt.year
-    df["month"] = df["requested_dt"].dt.month
-    c = pd.to_numeric(df["calendar_year"])
-    df["fiscal_year"] = np.where(df["month"] >= 7, c + 1, c)
-    df["fiscal_year"] = (pd.to_datetime(df["fiscal_year"], format="%Y")).dt.year
-    return df
-
-
 def entirely_within_fiscal_year(df):
     df = df.copy()
     # store year and month for both request and closure
     df["requested_cal_year"] = df["requested_dt"].dt.year
     df["requested_cal_month"] = df["requested_dt"].dt.month
-    df["closed_cal_year"] = df["date_closed"].dt.year
-    df["closed_cal_month"] = df["date_closed"].dt.month
+    df["completed_cal_year"] = df["completed_dt"].dt.year
+    df["completed_cal_month"] = df["completed_dt"].dt.month
     # store the years as numbers
     y_requested = pd.to_numeric(df["requested_cal_year"])
-    y_closed = pd.to_numeric(df["closed_cal_year"])
+    y_closed = pd.to_numeric(df["completed_cal_year"])
     # compute the fiscal year of request & closure
     df["requested_fiscal_year"] = np.where(
         df["requested_cal_month"] >= 7, y_requested + 1, y_requested
     )
-    df["closed_fiscal_year"] = np.where(
-        df["closed_cal_month"] >= 7, y_closed + 1, y_closed
+    df["completed_fiscal_year"] = np.where(
+        df["completed_cal_month"] >= 7, y_closed + 1, y_closed
     )
     # drop the rows that straddle two fiscal years
-    cond_both = df["requested_fiscal_year"] == df["closed_fiscal_year"]
+    cond_both = df["requested_fiscal_year"] == df["completed_fiscal_year"]
     df = df[cond_both]
     # cast the type of the year
     df["fiscal_year"] = (
@@ -86,12 +76,26 @@ def entirely_within_fiscal_year(df):
         columns=[
             "requested_cal_year",
             "requested_cal_month",
-            "closed_cal_year",
-            "closed_cal_month",
+            "completed_cal_year",
+            "completed_cal_month",
             "requested_fiscal_year",
-            "closed_fiscal_year",
+            "completed_fiscal_year",
         ]
     )
+    return df
+
+
+def add_fiscal_year(df, assign_fy_on="completion"):
+    df = df.copy()
+    if assign_fy_on == "completion":
+        df["calendar_year"] = df["completed_dt"].dt.year
+        df["month"] = df["completed_dt"].dt.month
+    if assign_fy_on == "request":
+        df["calendar_year"] = df["requested_dt"].dt.year
+        df["month"] = df["requested_dt"].dt.month
+    c = pd.to_numeric(df["calendar_year"])
+    df["fiscal_year"] = np.where(df["month"] >= 7, c + 1, c)
+    df["fiscal_year"] = (pd.to_datetime(df["fiscal_year"], format="%Y")).dt.year
     return df
 
 
