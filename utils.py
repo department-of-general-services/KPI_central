@@ -68,6 +68,7 @@ def entirely_within_fiscal_year(df):
     )
     # drop the rows that straddle two fiscal years
     cond_both = df["requested_fiscal_year"] == df["completed_fiscal_year"]
+    non_df = df[~cond_both]
     df = df[cond_both]
     # cast the type of the year
     df["fiscal_year"] = (
@@ -83,7 +84,7 @@ def entirely_within_fiscal_year(df):
             "completed_fiscal_year",
         ]
     )
-    return df
+    return df, non_df
 
 
 def add_fiscal_year(df, assign_fy_on="completion"):
