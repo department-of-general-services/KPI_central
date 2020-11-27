@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 .DS_Store
 private/*.*
+FMD_scorecard.py
+FMD_scorecard.txt
