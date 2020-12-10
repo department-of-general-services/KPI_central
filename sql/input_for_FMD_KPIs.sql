@@ -1,5 +1,6 @@
 SELECT
     wr.wr_id,
+    wr.description,
     wr.date_requested,
     wr.time_requested,
     wr.date_completed,

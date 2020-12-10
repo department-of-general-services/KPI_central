@@ -46,6 +46,7 @@ def glue_date_time(df, date_col, time_col, dt_col_name):
 
     # include the rows where the date col was null
     df = pd.concat([df_y, df_n], sort=False)
+    df = df.drop(columns=[date_col, time_col])
     return df
 
 
@@ -170,3 +171,9 @@ def drop_dupes(df):
     dupes = df[cond_1 & cond_2]
     df_deduped = df[~df["wr_id"].isin(dupes["wr_id"])]
     return df_deduped
+
+
+def compute_is_on_time(df, benchmark):
+    df = df.copy()
+    df["is_on_time"] = df["days_to_completion"] <= benchmark
+    return df
