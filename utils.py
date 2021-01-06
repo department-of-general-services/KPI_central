@@ -302,3 +302,43 @@ def compute_kpi_table(df, label_for_KPI, label_for_totals):
         columns={"mean": label_for_KPI, "count": label_for_totals}
     )
     return table_df
+
+
+def add_cm_benchmarks(row):
+    ontime_in_7 = ["BUILDING", "DELIVERY", "INSPECTION", "OTHER-INTERNAL", "LOCK"]
+    ontime_in_14 = [
+        "BATHROOM",
+        "CEILTILE",
+        "DOOR",
+        "ELECTRICAL",
+        "FIXTURES",
+        "LANDSCAPING",
+        "OTHER-EXTERNAL",
+        "PLUMBING",
+        "SERVICE",
+    ]
+    ontime_in_21 = ["APPLIANCE", "CARPENTRY", "ELEVATOR", "PAINTING", "PREVENTIVE"]
+    ontime_in_30 = ["HVAC", "WINDOW"]
+    ontime_in_45 = [
+        "AIR QUALITY",
+        "ENVIRONMENTAL",
+        "FENCE_GATE",
+        "FIRE SUPPRESSION-PROTECTION",
+        "FLOOR",
+        "OVERHDDOOR",
+        "SECURITY SYSTEMS",
+    ]
+    ontime_in_60 = ["DESIGN", "ROOF", "DUCT CLEANING"]
+    if row["primary"] in ontime_in_7:
+        row["benchmark"] = 7
+    elif row["primary"] in ontime_in_14:
+        row["benchmark"] = 14
+    elif row["primary"] in ontime_in_21:
+        row["benchmark"] = 21
+    elif row["primary"] in ontime_in_30:
+        row["benchmark"] = 30
+    elif row["primary"] in ontime_in_45:
+        row["benchmark"] = 45
+    elif row["primary"] in ontime_in_60:
+        row["benchmark"] = 60
+    return row
