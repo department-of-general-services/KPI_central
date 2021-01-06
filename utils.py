@@ -259,3 +259,46 @@ def consolidate_prob_types(row):
     ):
         row["primary"] = "OTHER-INTERNAL"
     return row
+
+
+def compute_pm_cm(df, PM_list):
+    df = df.copy().sort_values("fiscal_year")
+    results_df = pd.DataFrame(
+        columns=[
+            "year",
+            # "percent_pm",
+            "pm_cm_ratio",
+            "count_cm",
+            "count_pm",
+            "count_hvac",
+        ]
+    )
+    for year in df["fiscal_year"].unique():
+        results_dict = {}
+        df_fy = df[df["fiscal_year"] == year]
+        cond_pm = df_fy["is_pm"] == True
+        count_pm = len(df_fy[cond_pm])
+        count_hvac = len(df_fy)
+        count_cm = count_hvac - count_pm
+        results_dict["year"] = year
+        # results_dict["percent_pm"] = (count_pm / count_hvac) * 100
+        results_dict["pm_cm_ratio"] = count_pm / count_cm
+        results_dict["count_pm"] = count_pm
+        results_dict["count_cm"] = count_cm
+        results_dict["count_hvac"] = count_hvac
+        results_df = results_df.append(results_dict, ignore_index=True)
+    results_df[["year", "count_cm", "count_pm", "count_hvac"]] = results_df[
+        ["year", "count_cm", "count_pm", "count_hvac"]
+    ].astype(int)
+    return results_df.round(2)
+
+
+def compute_kpi_table(df, label_for_KPI, label_for_totals):
+    df = df.copy()
+    table_df = df.groupby("fiscal_year")[["is_on_time"]].agg(["mean", "count"])
+    table_df.columns = table_df.columns.droplevel(0)
+    table_df["mean"] = table_df["mean"].apply(lambda x: round(x * 100, 2))
+    table_df = table_df.rename(
+        columns={"mean": label_for_KPI, "count": label_for_totals}
+    )
+    return table_df
