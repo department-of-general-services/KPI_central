@@ -180,3 +180,82 @@ def drop_dupes(df):
     dupes = df[cond_1 & cond_2]
     df_deduped = df[~df["wr_id"].isin(dupes["wr_id"])]
     return df_deduped
+
+
+def consolidate_prob_types(row):
+    leave_alone_types = [
+        "AIR QUALITY",
+        "APPLIANCE",
+        "CEILTILE",
+        "DUCT CLEANING",
+        "ELEVATOR",
+        "FENCE_GATE",
+        "FIRE SUPPRESSION-PROTECTION",
+        "FLOOR",
+        "LOCK",
+        "OVERHDDOOR",
+        "ROOF",
+        "SNOW_REMOVAL",
+        "WINDOW",
+    ]
+    hvac_types = [
+        "BOILER",
+        "CHILLERS",
+        "COOLING TOWERS",
+        "HVAC|INFRASTRUCTURE",
+        "HVAC INFRASTRUCTURE",
+        "HVAC|HEATING OIL",
+        "HVAC|INSPECTION",
+        "HVAC|REPAIR",
+        "HVAC|REPLACEMENT",
+        "HVAC",
+    ]
+    pm_types = [
+        "BUILDING INTERIOR INSPECTION",
+        "BUILDING PM",
+        "GENERATOR PM",
+        "HVAC|PM",
+        "PREVENTIVE MAINT",
+        "INSPECTION",
+        "FUEL INSPECTION",
+    ]
+    other_types = ["OTHER", "RAMPS", "STEPS", "RAILSTAIRSRAMP"]
+    if row["problem_type"] in leave_alone_types:
+        row["primary"] = row["problem_type"]
+    elif row["problem_type"] in hvac_types:
+        row["primary"] = "HVAC"
+    elif row["problem_type"] in pm_types:
+        row["primary"] = "PREVENTIVE"
+    elif row["problem_type"] == "BATHROOM_FIXT":
+        row["primary"] = "BATHROOM"
+    elif row["problem_type"] in ["BUILDING EXTERIOR"]:
+        row["primary"] = "BUILDING"
+    elif row["problem_type"] in ["CARPENTRY", "WALL"]:
+        row["primary"] = "CARPENTRY"
+    elif row["problem_type"] in ["DELIVERY", "_DELIVERY"]:
+        row["primary"] = "DELIVERY"
+    elif row["problem_type"] == "DESIGN/RENOVATION":
+        row["primary"] = "DESIGN"
+    elif row["problem_type"] in ["PEDESTRIAN DOORS", "DOOR"]:
+        row["primary"] = "DOOR"
+    elif row["problem_type"].startswith("ELEC") or row["problem_type"] == "OUTLETS":
+        row["primary"] = "ELECTRICAL"
+    elif row["problem_type"].startswith("ENVIR") or row["problem_type"] == "ASBESTOS":
+        row["primary"] = "ENVIRONMENTAL"
+    elif row["problem_type"] in ["LAWN", "LANDSCAPING"]:
+        row["primary"] = "LANDSCAPING"
+    elif row["problem_type"] in ["PAINT", "PAINTING"]:
+        row["primary"] = "PAINTING"
+    elif row["problem_type"].startswith("PLUMB"):
+        row["primary"] = "PLUMBING"
+    elif row["problem_type"].startswith("SECURITY SYSTEMS"):
+        row["primary"] = "SECURITY SYSTEMS"
+    elif row["problem_type"].startswith("SERV"):
+        row["primary"] = "SERVICE"
+    elif row["problem_type"] in other_types and "GATEKEEPER" in str(row["role_name"]):
+        row["primary"] = "OTHER-EXTERNAL"
+    elif row["problem_type"] in other_types and not "GATEKEEPER" in str(
+        row["role_name"]
+    ):
+        row["primary"] = "OTHER-INTERNAL"
+    return row
