@@ -38,33 +38,37 @@ def set_plot_params():
 def pointplot_with_barplot(
     data,
     x,
-    y,
+    point_y,
+    bar_y,
     title,
     yaxis_freq=25,
-    ymax=105,
+    ymax_point=105,
+    ymax_bar=2000,
+    ylabel_point="",
+    ylabel_bar="",
+    xlabel="Fiscal Year",
 ):
     data = data.copy()
     data = data.reset_index(drop=False)
     sns.set_style("white")
     plt.figure(figsize=(14, 6))
 
-    ax1 = sns.barplot(data=data, x=x, y="total_PMs", color="steelblue", alpha=0.5)
+    ax1 = sns.barplot(data=data, x=x, y=bar_y, color="steelblue", alpha=0.5)
     ax1.grid(False)
-    _ = ax1.set(ylim=(0, 2000))
+    _ = ax1.set(ylim=(0, ymax_bar), xlabel=xlabel, ylabel=ylabel_bar)
 
     ax2 = ax1.twinx()
 
     ax2 = sns.pointplot(
         data=data,
         x=x,
-        y=y,
+        y=point_y,
         marker="o",
         color="steelblue",
     )
-    ax2.set(title=f"{title}")
-    _ = ax2.set(ylim=(0, ymax))
+    ax2.set(title=title, ylabel=ylabel_point, ylim=(0, ymax_point))
 
-    for point in [t for t in range(0, ymax) if t % yaxis_freq == 0]:
+    for point in [t for t in range(0, ymax_point) if t % yaxis_freq == 0]:
         plt.axhline(point, linestyle="--", alpha=0.25, color="grey")
 
     ax2.yaxis.set_major_locator(ticker.MultipleLocator(yaxis_freq))
