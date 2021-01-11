@@ -281,8 +281,7 @@ def compute_pm_cm(df, PM_list):
         count_hvac = len(df_fy)
         count_cm = count_hvac - count_pm
         results_dict["fiscal_year"] = fiscal_year
-        # results_dict["percent_pm"] = (count_pm / count_hvac) * 100
-        results_dict["pm_cm_ratio"] = count_pm / count_cm
+        results_dict["pm_cm_ratio"] = (count_pm / count_cm) * 100
         results_dict["count_pm"] = count_pm
         results_dict["count_cm"] = count_cm
         results_dict["count_hvac"] = count_hvac

@@ -47,6 +47,7 @@ def pointplot_with_barplot(
     ylabel_point="",
     ylabel_bar="",
     xlabel="Fiscal Year",
+    yticklabels=None,
 ):
     data = data.copy()
     data = data.reset_index(drop=False)
@@ -72,6 +73,8 @@ def pointplot_with_barplot(
         plt.axhline(point, linestyle="--", alpha=0.25, color="grey")
 
     ax2.yaxis.set_major_locator(ticker.MultipleLocator(yaxis_freq))
+    if yticklabels:
+        ax2.set_yticklabels(yticklabels)
 
     ax2.yaxis.set_label_position("left")
     ax2.yaxis.tick_left()
