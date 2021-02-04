@@ -341,3 +341,38 @@ def add_cm_benchmarks(row):
     elif row["primary"] in ontime_in_60:
         row["benchmark"] = 60
     return row
+
+
+def compute_pm_cm_by_month(df, PM_list):
+    df = df.copy().sort_values("date_closed")
+    today = datetime.today()
+    cond_current_fy = df["fiscal_year"] == today.year
+    cond_last_month = df["date_closed"] < "02-01-2021"
+    df = df[cond_current_fy & cond_last_month]
+    df["year_month"] = df["date_closed"].dt.strftime("%b-%y")
+    results_df = pd.DataFrame(
+        columns=[
+            "year_month",
+            "pm_cm_ratio",
+            "count_cm",
+            "count_pm",
+            "count_hvac",
+        ]
+    )
+    for year_month in df["year_month"].unique():
+        results_dict = {}
+        df_ym = df[df["year_month"] == year_month]
+        cond_pm = df_ym["is_pm"] == True
+        count_pm = len(df_ym[cond_pm])
+        count_hvac = len(df_ym)
+        count_cm = count_hvac - count_pm
+        results_dict["year_month"] = year_month
+        results_dict["pm_cm_ratio"] = (count_pm / count_cm) * 100
+        results_dict["count_pm"] = count_pm
+        results_dict["count_cm"] = count_cm
+        results_dict["count_hvac"] = count_hvac
+        results_df = results_df.append(results_dict, ignore_index=True)
+    results_df[["count_cm", "count_pm", "count_hvac"]] = results_df[
+        ["count_cm", "count_pm", "count_hvac"]
+    ].astype(int)
+    return results_df.round(2)

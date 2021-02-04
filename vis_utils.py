@@ -54,7 +54,7 @@ def pointplot_with_barplot(
     sns.set_style("white")
     plt.figure(figsize=(14, 6))
 
-    ax1 = sns.barplot(data=data, x=x, y=bar_y, color="steelblue", alpha=0.5)
+    ax1 = sns.barplot(data=data, x=x, y=bar_y, color="grey", alpha=0.5)
     ax1.grid(False)
     _ = ax1.set(ylim=(0, ymax_bar), xlabel=xlabel, ylabel=ylabel_bar)
 
@@ -65,7 +65,7 @@ def pointplot_with_barplot(
         x=x,
         y=point_y,
         marker="o",
-        color="steelblue",
+        color="indianred",
     )
     ax2.set(title=title, ylabel=ylabel_point, ylim=(0, ymax_point))
 
