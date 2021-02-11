@@ -50,41 +50,36 @@ def glue_date_time(df, date_col, time_col, dt_col_name):
 
 
 def entirely_within_fiscal_year(df):
-    df = df.copy()
+    df = df.copy().dropna(subset=["date_closed"])
     # store year and month for both request and closure
     df["requested_cal_year"] = df["requested_dt"].dt.year
     df["requested_cal_month"] = df["requested_dt"].dt.month
-    df["completed_cal_year"] = df["completed_dt"].dt.year
-    df["completed_cal_month"] = df["completed_dt"].dt.month
+    df["closed_cal_year"] = df["date_closed"].dt.year
+    df["closed_cal_month"] = df["date_closed"].dt.month
     # store the years as numbers
     y_requested = pd.to_numeric(df["requested_cal_year"])
-    y_closed = pd.to_numeric(df["completed_cal_year"])
+    y_closed = pd.to_numeric(df["closed_cal_year"])
     # compute the fiscal year of request & closure
-    df["requested_fiscal_year"] = np.where(
+    df["requested_fy"] = np.where(
         df["requested_cal_month"] >= 7, y_requested + 1, y_requested
     )
-    df["completed_fiscal_year"] = np.where(
-        df["completed_cal_month"] >= 7, y_closed + 1, y_closed
-    )
+    df["closed_fy"] = np.where(df["closed_cal_month"] >= 7, y_closed + 1, y_closed)
     # drop the rows that straddle two fiscal years
-    cond_both = df["requested_fiscal_year"] == df["completed_fiscal_year"]
-    non_df = df[~cond_both]
-    df = df[cond_both]
-    # cast the type of the year
-    df["fiscal_year"] = (
-        pd.to_datetime(df["requested_fiscal_year"], format="%Y")
-    ).dt.year
+    cond_both = df["requested_fy"] == df["closed_fy"]
+    straddler_df = df[~cond_both]
+    non_straddler_df = df[cond_both]
+    straddler_df["is_straddler"] = True
+    non_straddler_df["is_straddler"] = False
+    df = pd.concat([straddler_df, non_straddler_df])
     df = df.drop(
         columns=[
             "requested_cal_year",
             "requested_cal_month",
-            "completed_cal_year",
-            "completed_cal_month",
-            "requested_fiscal_year",
-            "completed_fiscal_year",
+            "closed_cal_year",
+            "closed_cal_month",
         ]
     )
-    return df, non_df
+    return df
 
 
 def add_fiscal_year(df, assign_fy_on="closure"):
