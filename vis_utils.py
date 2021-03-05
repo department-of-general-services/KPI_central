@@ -21,10 +21,10 @@ def set_plot_params():
     params = {
         "legend.fontsize": "large",
         "figure.figsize": (16, 6),
-        "axes.labelsize": "large",
-        "axes.labelweight": "bold",
+        "axes.labelsize": 16,
+        "axes.labelweight": "regular",
         "axes.labelpad": 10.0,
-        "axes.titlesize": "xx-large",
+        "axes.titlesize": 22,
         "axes.titleweight": "bold",
         "axes.titlepad": 15.0,
         "xtick.labelsize": "large",
