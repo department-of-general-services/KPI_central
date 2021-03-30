@@ -152,6 +152,19 @@ def compute_days_to_completion(df):
     return df
 
 
+def compute_days_open(df, current_date):
+    df = df.copy()
+    current_date = pd.to_datetime(current_date)
+    # compute days WR has been open, relative to today
+    df["days_open"] = df.apply(
+        lambda x: (current_date - x["requested_dt"]) / np.timedelta64(1, "D"),
+        axis=1,
+    ).round(2)
+    # set the index
+    df = df.set_index(keys="requested_dt", verify_integrity=False, drop=False)
+    return df
+
+
 def tidy_up_df(df):
     df = df.copy()
     df = df.rename(mapper={"prob_type": "problem_type"}, axis=1)
