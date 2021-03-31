@@ -152,6 +152,17 @@ def compute_days_to_completion(df):
     return df
 
 
+def compute_days_open(df):
+    df = df.copy()
+    current_date = pd.to_datetime("today")
+    # compute days WR has been open, relative to today
+    df["days_open"] = df.apply(
+        lambda x: (current_date - x["requested_dt"]) / np.timedelta64(1, "D"),
+        axis=1,
+    ).round(2)
+    return df
+
+
 def tidy_up_df(df):
     df = df.copy()
     df = df.rename(mapper={"prob_type": "problem_type"}, axis=1)
@@ -339,11 +350,11 @@ def add_cm_benchmarks(row):
     return row
 
 
-def compute_pm_cm_by_month(df, PM_list):
+def compute_pm_cm_by_month(df, PM_list, end_date):
     df = df.copy().sort_values("date_closed")
     today = datetime.today()
     cond_current_fy = df["fiscal_year"] == today.year
-    cond_last_month = df["date_closed"] < "02-01-2021"
+    cond_last_month = df["date_closed"] < end_date
     df = df[cond_current_fy & cond_last_month]
     df["year_month"] = df["date_closed"].dt.strftime("%b-%y")
     results_df = pd.DataFrame(
@@ -372,3 +383,28 @@ def compute_pm_cm_by_month(df, PM_list):
         ["count_cm", "count_pm", "count_hvac"]
     ].astype(int)
     return results_df.round(2)
+
+
+def compute_kpi_table_by_month(
+    df, label_for_KPI=None, label_for_totals=None, current_fy=2021, end_date=None
+):
+    df = df.copy()
+    try:
+        end_date = pd.to_datetime(end_date)
+    except Exception:
+        print(f"Date string {end_date} cannot be converted to a date.")
+    # filter to current fy
+    cond_current_fy = df["fiscal_year"] == current_fy
+    cond_end_date = df["date_closed"] < end_date
+    df = df[cond_current_fy & cond_end_date]
+    table_df = (
+        df[["wr_id", "date_closed", "is_on_time"]]
+        .resample("M", on="date_closed")
+        .agg({"is_on_time": "mean", "wr_id": "count"})
+    )
+    table_df["year_month"] = table_df.index.strftime("%b-%y")
+    table_df["is_on_time"] = table_df["is_on_time"].apply(lambda x: round(x * 100, 2))
+    table_df = table_df.rename(
+        columns={"is_on_time": label_for_KPI, "wr_id": label_for_totals}
+    )
+    return table_df
