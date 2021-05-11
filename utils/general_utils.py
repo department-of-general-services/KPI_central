@@ -26,6 +26,8 @@ def tidy_up_df(df):
     df = df.loc[:, ~df.columns.duplicated()]
     df = df.dropna(subset=["wr_id", "problem_type"])
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    df = df.applymap(lambda x: np.nan if x == "NULL" else x)
+    df["supervisor"] = df["supervisor"].apply(lambda x: "NULL" if x != x else x)
     cond_valid = ~df["problem_type"].str.contains("TEST")
     df = df[cond_valid]
     df["status"] = df["status"].replace("A", "AA", regex=False)
@@ -222,7 +224,12 @@ def compute_pm_cm_by_month(df, PM_list, end_date):
 
 
 def compute_kpi_table_by_month(
-    df, label_for_KPI=None, label_for_totals=None, current_fy=2021, end_date=None
+    df,
+    label_for_KPI=None,
+    label_for_totals=None,
+    current_fy=2021,
+    end_date=None,
+    grouping="date_closed",
 ):
     df = df.copy()
     try:
@@ -235,7 +242,7 @@ def compute_kpi_table_by_month(
     df = df[cond_current_fy & cond_end_date]
     table_df = (
         df[["wr_id", "date_closed", "is_on_time"]]
-        .resample("M", on="date_closed")
+        .resample("M", on=grouping)
         .agg({"is_on_time": "mean", "wr_id": "count"})
     )
     table_df["year_month"] = table_df.index.strftime("%b-%y")
