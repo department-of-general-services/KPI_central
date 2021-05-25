@@ -160,15 +160,15 @@ def compute_pm_cm(df, PM_list):
     return results_df.round(2)
 
 
-def add_fiscal_year(df, assign_fy_on="closure"):
+def add_fiscal_year(df, assign_fy_on="closed"):
     df = df.copy()
-    if assign_fy_on == "closure":
+    if assign_fy_on == "closed":
         df["calendar_year"] = df["date_closed"].dt.year
         df["month"] = df["date_closed"].dt.month
-    if assign_fy_on == "completion":
+    elif assign_fy_on == "completed":
         df["calendar_year"] = df["date_completed"].dt.year
         df["month"] = df["date_completed"].dt.month
-    if assign_fy_on == "request":
+    elif assign_fy_on == "requested":
         df["calendar_year"] = df["date_requested"].dt.year
         df["month"] = df["date_requested"].dt.month
     c = pd.to_numeric(df["calendar_year"])
@@ -254,9 +254,8 @@ def compute_kpi_table_by_month(
     return table_df
 
 
-def compute_is_on_time(row):
-    row["is_on_time"] = int(row["days_to_completion"]) <= int(row["benchmark"])
-    return row
+def compute_is_on_time(days_to_completion, benchmark):
+    return days_to_completion <= benchmark
 
 
 def duration_in_days(df, new_col_name: str, start_col: str, end_col: str):
@@ -267,3 +266,27 @@ def duration_in_days(df, new_col_name: str, start_col: str, end_col: str):
         axis=1,
     ).round(2)
     return df
+
+
+def choose_pms_or_cms(df, selection: str = ""):
+    """Simplifies the interactive notebook by letting the
+    user use a dropdown to pick whether to look at PMs or CMs.
+    """
+    df = df.copy()
+    assert selection in ["PMs", "CMs"]
+    # this defines which problem types are considered PMs
+    pm_list = [
+        "PREVENTIVE_GENERAL",
+        "PREVENTIVE_HVAC",
+    ]
+    # filter data to PM types only
+    cond_pm = df["primary_type"].isin(pm_list)
+
+    # apply filter conditions
+    if selection == "PMs":
+        df_filt = df[cond_pm].copy()
+        # the benchmark for all PMs is 21 days
+        df_filt["benchmark"] = 21
+    elif selection == "CMs":
+        df_filt = df[~cond_pm].copy()
+    return df_filt
