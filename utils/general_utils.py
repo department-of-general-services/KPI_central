@@ -159,6 +159,7 @@ def compute_pm_cm(df, PM_list):
     ].astype(int)
     return results_df.round(2)
 
+
 def add_fiscal_year(df, assign_fy_on="closure"):
     df = df.copy()
     if assign_fy_on == "closure":
@@ -256,3 +257,13 @@ def compute_kpi_table_by_month(
 def compute_is_on_time(row):
     row["is_on_time"] = int(row["days_to_completion"]) <= int(row["benchmark"])
     return row
+
+
+def duration_in_days(df, new_col_name: str, start_col: str, end_col: str):
+    df = df.copy()
+    # compute days to completion
+    df[new_col_name] = df.apply(
+        lambda x: (x[end_col] - x[start_col]) / np.timedelta64(1, "D"),
+        axis=1,
+    ).round(2)
+    return df
