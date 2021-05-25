@@ -14,7 +14,7 @@ def mssql_engine(
     return engine
 
 
-def get_data_from_archibus(engine):
-    query = "SELECT * from DGS_Archibus.afm.dash_benchmarks;"
+def get_data_from_archibus(engine, db_name):
+    query = f"SELECT * from DGS_Archibus.afm.{db_name};"
     archibus_df = pd.read_sql(query, engine)
     return archibus_df
