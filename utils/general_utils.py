@@ -160,7 +160,7 @@ def compute_pm_cm(df, PM_list):
     return results_df.round(2)
 
 
-def add_fiscal_year(df, assign_fy_on="Closed"):
+def add_fiscal_year(df, assign_fy_on):
     df = df.copy()
     if assign_fy_on == "Closed":
         df["calendar_year"] = df["date_closed"].dt.year
