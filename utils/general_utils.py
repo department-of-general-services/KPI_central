@@ -160,15 +160,15 @@ def compute_pm_cm(df, PM_list):
     return results_df.round(2)
 
 
-def add_fiscal_year(df, assign_fy_on="closed"):
+def add_fiscal_year(df, assign_fy_on="Closed"):
     df = df.copy()
-    if assign_fy_on == "closed":
+    if assign_fy_on == "Closed":
         df["calendar_year"] = df["date_closed"].dt.year
         df["month"] = df["date_closed"].dt.month
-    elif assign_fy_on == "completed":
+    elif assign_fy_on == "Completed":
         df["calendar_year"] = df["date_completed"].dt.year
         df["month"] = df["date_completed"].dt.month
-    elif assign_fy_on == "requested":
+    elif assign_fy_on == "Requested":
         df["calendar_year"] = df["date_requested"].dt.year
         df["month"] = df["date_requested"].dt.month
     c = pd.to_numeric(df["calendar_year"])
@@ -273,7 +273,7 @@ def choose_pms_or_cms(df, selection: str = ""):
     user use a dropdown to pick whether to look at PMs or CMs.
     """
     df = df.copy()
-    assert selection in ["PMs", "CMs"]
+    assert selection in ["PMs", "CMs", "All WRs"]
     # this defines which problem types are considered PMs
     pm_list = [
         "PREVENTIVE_GENERAL",
@@ -289,4 +289,11 @@ def choose_pms_or_cms(df, selection: str = ""):
         df_filt["benchmark"] = 21
     elif selection == "CMs":
         df_filt = df[~cond_pm].copy()
+    elif selection == "All WRs":
+        df_filt = df.copy()
+    # store is_on_time variable
+    df_filt = df_filt.dropna(subset=["days_to_completion", "benchmark"])
+    df_filt["is_on_time"] = compute_is_on_time(
+        df_filt["days_to_completion"], df_filt["benchmark"]
+    )
     return df_filt

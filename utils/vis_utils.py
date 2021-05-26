@@ -43,7 +43,7 @@ def pointplot_with_barplot(
     title,
     yaxis_freq=25,
     ymax_point=105,
-    ymax_bar=2000,
+    ymax_bar=None,
     ylabel_point="",
     ylabel_bar="",
     xlabel="Fiscal Year",
@@ -55,11 +55,9 @@ def pointplot_with_barplot(
 
     ax1 = sns.barplot(data=data, x=x, y=bar_y, color="lightgrey", alpha=0.5)
     ax1.grid(False)
+    if ymax_bar is None:
+        ymax_bar = max(data[bar_y]) + (max(data[bar_y]) * 0.33)
     _ = ax1.set(ylim=(0, ymax_bar), xlabel=xlabel, ylabel=ylabel_bar)
-
-    # format = mdates.DateFormatter("%b-%y")
-    # ax1.xaxis.set_major_locator(mdates.MonthLocator(interval=interval))
-    # ax1.xaxis.set_major_formatter(format)
 
     ax2 = ax1.twinx()
     ax2 = sns.pointplot(
