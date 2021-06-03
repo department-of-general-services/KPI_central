@@ -194,13 +194,13 @@ def compute_kpi_table(df, label_for_KPI, label_for_totals, grouping_var="fiscal_
     return table_df
 
 
-def compute_pm_cm_by_month(df, PM_list, end_date):
+def compute_pm_cm_by_month(df, end_date):
     df = df.copy().sort_values("date_closed")
     today = datetime.today()
     cond_current_fy = df["fiscal_year"] == today.year
-    cond_last_month = df["date_closed"] < end_date
+    cond_last_month = df["date_completed"] < end_date
     df = df[cond_current_fy & cond_last_month]
-    df["year_month"] = df["date_closed"].dt.strftime("%b-%y")
+    df["year_month"] = df["date_completed"].dt.strftime("%b-%y")
     results_df = pd.DataFrame(
         columns=[
             "year_month",
