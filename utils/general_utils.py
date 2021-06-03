@@ -160,15 +160,20 @@ def compute_pm_cm(df, PM_list):
     return results_df.round(2)
 
 
-def add_fiscal_year(df, assign_fy_on):
+def add_fiscal_year(df, assign_fy_on="closure"):
     df = df.copy()
-    if assign_fy_on == "Closed":
+    assert assign_fy_on in [
+        "request",
+        "completion",
+        "closure",
+    ], "The parameter `assign_fy_on` must be 'request', 'completion', or 'closure'"
+    if assign_fy_on == "closure":
         df["calendar_year"] = df["date_closed"].dt.year
         df["month"] = df["date_closed"].dt.month
-    elif assign_fy_on == "Completed":
+    if assign_fy_on == "completion":
         df["calendar_year"] = df["date_completed"].dt.year
         df["month"] = df["date_completed"].dt.month
-    elif assign_fy_on == "Requested":
+    if assign_fy_on == "request":
         df["calendar_year"] = df["date_requested"].dt.year
         df["month"] = df["date_requested"].dt.month
     c = pd.to_numeric(df["calendar_year"])
@@ -189,13 +194,13 @@ def compute_kpi_table(df, label_for_KPI, label_for_totals, grouping_var="fiscal_
     return table_df
 
 
-def compute_pm_cm_by_month(df, PM_list, end_date):
+def compute_pm_cm_by_month(df, end_date):
     df = df.copy().sort_values("date_closed")
     today = datetime.today()
     cond_current_fy = df["fiscal_year"] == today.year
-    cond_last_month = df["date_closed"] < end_date
+    cond_last_month = df["date_completed"] < end_date
     df = df[cond_current_fy & cond_last_month]
-    df["year_month"] = df["date_closed"].dt.strftime("%b-%y")
+    df["year_month"] = df["date_completed"].dt.strftime("%b-%y")
     results_df = pd.DataFrame(
         columns=[
             "year_month",
@@ -239,10 +244,10 @@ def compute_kpi_table_by_month(
         print(f"Date string {end_date} cannot be converted to a date.")
     # filter to current fy
     cond_current_fy = df["fiscal_year"] == current_fy
-    cond_end_date = df["date_closed"] < end_date
+    cond_end_date = df[grouping] < end_date
     df = df[cond_current_fy & cond_end_date]
     table_df = (
-        df[["wr_id", "date_closed", "is_on_time"]]
+        df[["wr_id", grouping, "is_on_time"]]
         .resample("M", on=grouping)
         .agg({"is_on_time": "mean", "wr_id": "count"})
     )
@@ -297,3 +302,34 @@ def choose_pms_or_cms(df, selection: str = ""):
         df_filt["days_to_completion"], df_filt["benchmark"]
     )
     return df_filt
+
+
+def trim_small_groups(df, col, n_mode=False, threshold=None, n=None):
+    """
+    Filters a df so that the result contains only a discrete number of values in a specified categorical column.
+    Returns a filtered df that contains either:
+    - Only those rows in the df that fall into the n most numerous categories (if n_mode = True)
+    - Only those rows in the df that fall into an arbitrary number of categories that meet a row-count
+    threshold (if n_mode = False)
+    Args:
+        df (pandas df): The dataframe to filter
+        col (str): the column we want to use to remove values
+        n_mode (bool): If true, the function takes the number of groups to return (n). If false,
+                       then the function ignores n and takes the minimum value groups must
+                       contain to be included (threshold).
+        threshold (int): the threshold number of rows a value must have to remain
+        n (int): the desired number of groups to return
+    Returns:
+        df_filtered (pandas df): A Pandas dataframe with nrows equal to or less than df.
+    """
+    df = df.copy()  # ensures the original data isn't modified
+    if n_mode:
+        to_include_list = (
+            df[col].value_counts()[0:n].index.tolist()
+        )  # list of top n categories
+        df_filtered = df[df[col].isin(to_include_list)]  # filter
+    else:
+        # list of categories above threshold
+        to_include_list = df[col].value_counts()[lambda x: x > threshold].index.tolist()
+        df_filtered = df[df[col].isin(to_include_list)]  # filter
+    return df_filtered

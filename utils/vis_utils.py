@@ -35,13 +35,20 @@ def set_plot_params():
     return
 
 
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from matplotlib.dates import DateFormatter
+import matplotlib.ticker as ticker
+
+
 def pointplot_with_barplot(
     data,
     x,
     point_y,
     bar_y,
     title,
-    yaxis_freq=25,
+    yaxis_freq_bar=25,
+    yaxis_freq_point=50,
     ymax_point=105,
     ymax_bar=None,
     ylabel_point="",
@@ -54,10 +61,16 @@ def pointplot_with_barplot(
     sns.set_style("white")
 
     ax1 = sns.barplot(data=data, x=x, y=bar_y, color="lightgrey", alpha=0.5)
+
     ax1.grid(False)
     if ymax_bar is None:
         ymax_bar = max(data[bar_y]) + (max(data[bar_y]) * 0.33)
     _ = ax1.set(ylim=(0, ymax_bar), xlabel=xlabel, ylabel=ylabel_bar)
+
+    format = mdates.DateFormatter("%b-%y")
+    ax1.xaxis.set_major_locator(mdates.MonthLocator(interval=interval))
+    ax1.xaxis.set_major_formatter(format)
+    ax1.yaxis.set_major_locator(ticker.MultipleLocator(yaxis_freq_bar))
 
     ax2 = ax1.twinx()
     ax2 = sns.pointplot(
@@ -68,10 +81,10 @@ def pointplot_with_barplot(
     )
     ax2.set(title=title, ylabel=ylabel_point, ylim=(0, ymax_point))
 
-    for point in [t for t in range(0, ymax_point) if t % yaxis_freq == 0]:
-        plt.axhline(point, linestyle="--", alpha=0.25, color="lightgrey")
+    for point in [t for t in range(0, ymax_point) if t % yaxis_freq_point == 0]:
+        plt.axhline(point, linestyle="--", alpha=0.25, color="grey")
 
-    ax2.yaxis.set_major_locator(ticker.MultipleLocator(yaxis_freq))
+    ax2.yaxis.set_major_locator(ticker.MultipleLocator(yaxis_freq_point))
     if yticklabels:
         ax2.set_yticklabels(yticklabels)
 
