@@ -2,7 +2,6 @@ import pandas as pd
 import sqlalchemy as db
 import pyodbc
 from private.config import config
-# from utils.general_utils import clean_report
 
 
 def mssql_engine(
