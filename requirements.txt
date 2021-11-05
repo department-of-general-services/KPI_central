@@ -6,6 +6,7 @@ flake8~=4.0.0
 jupyter~=1.0.0
 matplotlib~=3.4.3
 notebook~=6.4.5
+ipykernel~=6.5.0
 dynaconf~=3.1.0
 pyodbc~=4.0.32
 pytest~=6.2.5
