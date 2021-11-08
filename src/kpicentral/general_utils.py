@@ -3,6 +3,28 @@ import numpy as np
 from datetime import datetime
 import re
 
+INT_COLS = [
+    "wr_id",
+    "fy_request",
+    "fy_complete",
+    "fy_close",
+    "days_since_request",
+    "weekdays_complete_to_close",
+    "weekdays_since_completion",
+    "completion_benchmark",
+    "closure_benchmark",
+]
+BOOL_COLS = [
+    "is_vendor_work",
+    "not_completed_but_late",
+    "not_closed_but_late",
+    "is_on_time",
+    "closed_on_time",
+    "is_ratio_pm",
+    "is_ratio_cm",
+    "is_any_pm",
+]
+
 
 def set_pd_params():
     """
@@ -20,7 +42,7 @@ def set_pd_params():
     return
 
 
-def tidy_up_df(df):
+def tidy_up_df(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df = df.rename(mapper={"prob_type": "problem_type"}, axis=1)
     df = df.loc[:, ~df.columns.duplicated()]
@@ -34,15 +56,46 @@ def tidy_up_df(df):
     return df
 
 
-def cast_dtypes(df):
+def clean_up_colnames(df_raw: pd.DataFrame, return_cols: list = None) -> pd.DataFrame:
+    """Cleans a dataframe by standardizing column names, stripping
+    whitespaces around string values, dropping rows with missing data
+    (for certain cols)
+    Args:
+        df_raw (dataframe): Input dataframe
+        na_cols (list): List of cols to check for missing values
+        return_cols (list): List of cols to return, default returns all cols
+    Returns:
+        df (dataframe): Clean dataframe
+    """
+    # make a copy of the columns to return
+    if return_cols:
+        df = df_raw[return_cols].copy()
+    else:
+        df = df_raw.copy()
+    # standardize col names
+    df.columns = [col.strip() for col in df.columns]
+    df.columns = [col.lower().replace(" ", "_") for col in df.columns]
+    df.columns = [col.replace("(", "") for col in df.columns]
+    df.columns = [col.replace(")", "") for col in df.columns]
+    df.columns = [col.replace("/", "_") for col in df.columns]
+    # check for double underscores
+    df.columns = [col.replace("__", "_") for col in df.columns]
+    for colname in df.columns:
+        if colname.startswith("unnamed"):
+            df = df.drop(columns=[colname])
+    return df
+
+
+def cast_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    df["wr_id"] = df["wr_id"].astype(int)
+    df[INT_COLS] = df[INT_COLS].astype(float).astype("Int64")
+    df[BOOL_COLS] = df[BOOL_COLS].astype(bool)
     df = df.replace("NULL", np.nan)
     df["supervisor"] = df["supervisor"].replace(np.nan, "NULL")
     return df
 
 
-def drop_dupes(df):
+def drop_dupes(df: pd.DataFrame) -> pd.DataFrame:
     cond_1 = df["cf_notes"].str.contains(r"duplicate", re.IGNORECASE)
     cond_2 = df["status"].isin(["Can", "Clo", "R"])
     dupes = df[cond_1 & cond_2]
@@ -50,140 +103,47 @@ def drop_dupes(df):
     return df_deduped
 
 
-def consolidate_prob_types(row):
-    leave_alone_types = [
-        "AIR QUALITY",
-        "APPLIANCE",
-        "CEILTILE",
-        "DUCT CLEANING",
-        "ELEVATOR",
-        "FENCE_GATE",
-        "FIRE SUPPRESSION-PROTECTION",
-        "FLOOR",
-        "LOCK",
-        "OVERHDDOOR",
-        "ROOF",
-        "SNOW_REMOVAL",
-        "WINDOW",
-    ]
-    hvac_types = [
-        "BOILER",
-        "CHILLERS",
-        "COOLING TOWERS",
-        "HVAC|INFRASTRUCTURE",
-        "HVAC INFRASTRUCTURE",
-        "HVAC|HEATING OIL",
-        "HVAC|INSPECTION",
-        "HVAC|REPAIR",
-        "HVAC|REPLACEMENT",
-        "HVAC",
-    ]
-    pm_types = [
-        "BUILDING INTERIOR INSPECTION",
-        "BUILDING PM",
-        "GENERATOR PM",
-        "HVAC|PM",
-        "PREVENTIVE MAINT",
-        "INSPECTION",
-        "FUEL INSPECTION",
-    ]
-    other_types = ["OTHER", "RAMPS", "STEPS", "RAILSTAIRSRAMP"]
-    if row["problem_type"] in leave_alone_types:
-        row["primary"] = row["problem_type"]
-    elif row["problem_type"] in hvac_types:
-        row["primary"] = "HVAC"
-    elif row["problem_type"] in pm_types:
-        row["primary"] = "PREVENTIVE"
-    elif row["problem_type"] == "BATHROOM_FIXT":
-        row["primary"] = "BATHROOM"
-    elif row["problem_type"] in ["BUILDING EXTERIOR"]:
-        row["primary"] = "BUILDING"
-    elif row["problem_type"] in ["CARPENTRY", "WALL"]:
-        row["primary"] = "CARPENTRY"
-    elif row["problem_type"] in ["DELIVERY", "_DELIVERY"]:
-        row["primary"] = "DELIVERY"
-    elif row["problem_type"] == "DESIGN/RENOVATION":
-        row["primary"] = "DESIGN"
-    elif row["problem_type"] in ["PEDESTRIAN DOORS", "DOOR"]:
-        row["primary"] = "DOOR"
-    elif row["problem_type"].startswith("ELEC") or row["problem_type"] == "OUTLETS":
-        row["primary"] = "ELECTRICAL"
-    elif row["problem_type"].startswith("ENVIR") or row["problem_type"] == "ASBESTOS":
-        row["primary"] = "ENVIRONMENTAL"
-    elif row["problem_type"] in ["LAWN", "LANDSCAPING"]:
-        row["primary"] = "LANDSCAPING"
-    elif row["problem_type"] in ["PAINT", "PAINTING"]:
-        row["primary"] = "PAINTING"
-    elif row["problem_type"].startswith("PLUMB"):
-        row["primary"] = "PLUMBING"
-    elif row["problem_type"].startswith("SECURITY SYSTEMS"):
-        row["primary"] = "SECURITY SYSTEMS"
-    elif row["problem_type"].startswith("SERV"):
-        row["primary"] = "SERVICE"
-    elif row["problem_type"] in other_types and "GATEKEEPER" in str(row["role_name"]):
-        row["primary"] = "OTHER-EXTERNAL"
-    elif row["problem_type"] in other_types and not "GATEKEEPER" in str(
-        row["role_name"]
-    ):
-        row["primary"] = "OTHER-INTERNAL"
-    return row
-
-
-def compute_pm_cm(df, PM_list):
-    df = df.copy().sort_values("fiscal_year")
+def compute_pm_cm(df, grouping_var: str = "fy_complete"):
+    df = df.copy().sort_values(grouping_var)
     results_df = pd.DataFrame(
         columns=[
-            "fy_request",
-            # "percent_pm",
             "pm_cm_ratio",
+            "percent_pm",
             "count_cm",
             "count_pm",
             "count_hvac",
+            grouping_var,
         ]
     )
-    for fiscal_year in df["fiscal_year"].unique():
+    for fiscal_year in df[grouping_var].unique():
+        print(fiscal_year)
+        if pd.isna(fiscal_year):
+            continue
         results_dict = {}
-        df_fy = df[df["fiscal_year"] == fiscal_year]
-        cond_pm = df_fy["is_pm"] == True
+        df_fy = df[df[grouping_var] == fiscal_year]
+        cond_pm = df_fy["is_pm"] is True
         count_pm = len(df_fy[cond_pm])
         count_hvac = len(df_fy)
         count_cm = count_hvac - count_pm
-        results_dict["fiscal_year"] = fiscal_year
-        results_dict["pm_cm_ratio"] = (count_pm / count_cm) * 100
+        results_dict[grouping_var] = fiscal_year
+        results_dict["percent_pm"] = (count_pm / count_cm) * 100
+        results_dict["pm_cm_ratio"] = f"{round((count_pm / count_cm), 2)}:1"
         results_dict["count_pm"] = count_pm
         results_dict["count_cm"] = count_cm
         results_dict["count_hvac"] = count_hvac
         results_df = results_df.append(results_dict, ignore_index=True)
-    results_df[["fiscal_year", "count_cm", "count_pm", "count_hvac"]] = results_df[
-        ["fiscal_year", "count_cm", "count_pm", "count_hvac"]
+    results_df[[grouping_var, "count_cm", "count_pm", "count_hvac"]] = results_df[
+        [grouping_var, "count_cm", "count_pm", "count_hvac"]
     ].astype(int)
     return results_df.round(2)
 
 
-def add_fiscal_year(df, assign_fy_on="closure"):
-    df = df.copy()
-    assert assign_fy_on in [
-        "request",
-        "completion",
-        "closure",
-    ], "The parameter `assign_fy_on` must be 'request', 'completion', or 'closure'"
-    if assign_fy_on == "closure":
-        df["calendar_year"] = df["date_closed"].dt.year
-        df["month"] = df["date_closed"].dt.month
-    if assign_fy_on == "completion":
-        df["calendar_year"] = df["date_completed"].dt.year
-        df["month"] = df["date_completed"].dt.month
-    if assign_fy_on == "request":
-        df["calendar_year"] = df["date_requested"].dt.year
-        df["month"] = df["date_requested"].dt.month
-    c = pd.to_numeric(df["calendar_year"])
-    df["fiscal_year"] = np.where(df["month"] >= 7, c + 1, c)
-    df["fiscal_year"] = (pd.to_datetime(df["fiscal_year"], format="%Y")).dt.year
-    df["fiscal_year"] = df["fiscal_year"].astype("Int64")
-    return df
-
-
-def compute_kpi_table(df, label_for_KPI, label_for_totals, grouping_var="fiscal_year"):
+def compute_kpi_table(
+    df: pd.DataFrame,
+    label_for_KPI: str,
+    label_for_totals: str,
+    grouping_var="fy_complete",
+):
     df = df.copy()
     table_df = df.groupby(grouping_var)[["is_on_time"]].agg(["mean", "count"])
     table_df.columns = table_df.columns.droplevel(0)
@@ -194,10 +154,10 @@ def compute_kpi_table(df, label_for_KPI, label_for_totals, grouping_var="fiscal_
     return table_df
 
 
-def compute_pm_cm_by_month(df, end_date):
+def compute_pm_cm_by_month(df: pd.DataFrame, end_date: datetime) -> pd.DataFrame:
     df = df.copy().sort_values("date_closed")
     today = datetime.today()
-    cond_current_fy = df["fiscal_year"] == today.year
+    cond_current_fy = df["fy_complete"] == today.year
     cond_last_month = df["date_completed"] < end_date
     df = df[cond_current_fy & cond_last_month]
     df["year_month"] = df["date_completed"].dt.strftime("%b-%y")
@@ -213,7 +173,7 @@ def compute_pm_cm_by_month(df, end_date):
     for year_month in df["year_month"].unique():
         results_dict = {}
         df_ym = df[df["year_month"] == year_month]
-        cond_pm = df_ym["is_pm"] == True
+        cond_pm = df_ym["is_pm"] is True
         count_pm = len(df_ym[cond_pm])
         count_hvac = len(df_ym)
         count_cm = count_hvac - count_pm
@@ -230,13 +190,13 @@ def compute_pm_cm_by_month(df, end_date):
 
 
 def compute_kpi_table_by_month(
-    df,
-    label_for_KPI=None,
-    label_for_totals=None,
-    current_fy=2021,
-    end_date=None,
-    grouping="date_closed",
-):
+    df: pd.DataFrame,
+    label_for_KPI: str = None,
+    label_for_totals: str = None,
+    current_fy: str = 2021,
+    end_date: str = None,
+    grouping: str = "date_closed",
+) -> pd.DataFrame:
     df = df.copy()
     try:
         end_date = pd.to_datetime(end_date)
@@ -259,21 +219,13 @@ def compute_kpi_table_by_month(
     return table_df
 
 
-def compute_is_on_time(days_to_completion, benchmark):
+def compute_is_on_time(
+    days_to_completion: pd.Series, benchmark: pd.Series
+) -> pd.Series:
     return days_to_completion <= benchmark
 
 
-def duration_in_days(df, new_col_name: str, start_col: str, end_col: str):
-    df = df.copy()
-    # compute days to completion
-    df[new_col_name] = df.apply(
-        lambda x: (x[end_col] - x[start_col]) / np.timedelta64(1, "D"),
-        axis=1,
-    ).round(2)
-    return df
-
-
-def choose_pms_or_cms(df, selection: str = ""):
+def choose_pms_or_cms(df: pd.DataFrame, selection: str = ""):
     """Simplifies the interactive notebook by letting the
     user use a dropdown to pick whether to look at PMs or CMs.
     """
@@ -304,13 +256,21 @@ def choose_pms_or_cms(df, selection: str = ""):
     return df_filt
 
 
-def trim_small_groups(df, col, n_mode=False, threshold=None, n=None):
+def trim_small_groups(
+    df: pd.DataFrame,
+    col: str,
+    n_mode: bool = False,
+    threshold=None,
+    n: int = None,
+):
     """
-    Filters a df so that the result contains only a discrete number of values in a specified categorical column.
-    Returns a filtered df that contains either:
-    - Only those rows in the df that fall into the n most numerous categories (if n_mode = True)
-    - Only those rows in the df that fall into an arbitrary number of categories that meet a row-count
-    threshold (if n_mode = False)
+    Filters a df so that the result contains only a discrete number of
+    values in a specified categorical column. Returns a filtered df that
+    contains either:
+    - Only those rows in the df that fall into the n most numerous
+        categories (if n_mode = True)
+    - Only those rows in the df that fall into an arbitrary number of
+        categories that meet a row-count threshold (if n_mode = False)
     Args:
         df (pandas df): The dataframe to filter
         col (str): the column we want to use to remove values

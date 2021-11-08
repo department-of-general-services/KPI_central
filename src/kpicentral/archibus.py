@@ -1,7 +1,5 @@
 from __future__ import annotations  # prevents NameError for typehints
-from typing import List, Dict
-from datetime import date
-
+from typing import List
 import pyodbc
 import sqlalchemy
 from sqlalchemy.engine import URL, Row
