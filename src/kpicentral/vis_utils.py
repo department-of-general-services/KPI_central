@@ -3,41 +3,6 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from matplotlib.dates import DateFormatter
-import matplotlib.ticker as ticker
-from pathlib import Path
-
-
-def set_plot_params():
-    """
-    Sets default plotting options.
-    Args:
-        None
-    Returns:
-        None
-    """
-    sns.set_style("whitegrid", {"grid.linestyle": "--"})
-
-    params = {
-        "legend.fontsize": "large",
-        "figure.figsize": (16, 6),
-        "axes.labelsize": 16,
-        "axes.labelweight": "regular",
-        "axes.labelpad": 10.0,
-        "axes.titlesize": 22,
-        "axes.titleweight": "bold",
-        "axes.titlepad": 15.0,
-        "xtick.labelsize": "large",
-        "ytick.labelsize": "large",
-    }
-
-    plt.rcParams.update(params)
-    return
-
-
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.dates import DateFormatter
 import matplotlib.ticker as ticker
 
 

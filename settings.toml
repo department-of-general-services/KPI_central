@@ -1,0 +1,3 @@
+[TESTING]
+archibus_server = "test_server"
+archibus_db = "test_db_name"
