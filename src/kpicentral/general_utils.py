@@ -116,12 +116,11 @@ def compute_pm_cm(df, grouping_var: str = "fy_complete"):
         ]
     )
     for fiscal_year in df[grouping_var].unique():
-        print(fiscal_year)
         if pd.isna(fiscal_year):
             continue
         results_dict = {}
         df_fy = df[df[grouping_var] == fiscal_year]
-        cond_pm = df_fy["is_pm"] is True
+        cond_pm = df_fy["is_pm"]
         count_pm = len(df_fy[cond_pm])
         count_hvac = len(df_fy)
         count_cm = count_hvac - count_pm
@@ -173,7 +172,7 @@ def compute_pm_cm_by_month(df: pd.DataFrame, end_date: datetime) -> pd.DataFrame
     for year_month in df["year_month"].unique():
         results_dict = {}
         df_ym = df[df["year_month"] == year_month]
-        cond_pm = df_ym["is_pm"] is True
+        cond_pm = df_ym["is_pm"]
         count_pm = len(df_ym[cond_pm])
         count_hvac = len(df_ym)
         count_cm = count_hvac - count_pm
