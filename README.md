@@ -1,4 +1,6 @@
 # KPI_reference
+Intended to facilitate sharing information about KPIs and how we compute them.
+=======
 This repository is intended to facilitate sharing information about the Facilities Management Division's key performance indicators (KPIs) and how they are computed.
 
 Note that the notebooks in this repository draw their data from Archibus. And they draw that data not from the raw operational tables, but from the same SQL views that supply data to the Facilities Management Division's dashboard within Archibus. 
@@ -64,8 +66,15 @@ If you receive an error message, or the version of python you have installed is 
 1. Install the other dependencies required to contribute to the project: `pip -r requirements.txt`
 1. Install `pre-commit` to autoformat your code: `pre-commit install`
 1. Install the jupyter notebook extensions by running: `jupyter contrib nbextension install --user`
+1. Create a new file named `.secrets.toml` and add the name of the server and database:
+```
+[DEVELOPMENT]
+faster_web_server = "server_name"
+faster_web_db = "database_name"
+```
 1. Run unit and integration tests by running `pytest`. Currently there are no tests, so you will see the line:
 
 ```
 collected 0 items
 ```
+
